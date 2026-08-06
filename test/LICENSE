@@ -1,0 +1,16 @@
+Test textures in this directory are modified derivatives of a single
+Minetest Game texture, used here to exercise check_package.py's matching
+under rotation/flip/hue/edit variations.
+
+Original: mods/default/textures/default_chest_lock.png
+Original author: BlockMen
+Original license: CC BY-SA 3.0
+Source: Minetest Game, see ../mtg_textures/LICENSE.txt and
+../mtg_textures/default/README.txt
+
+Derivatives, all CC BY-SA 3.0, same as the original:
+  default_chest_lock_flipped_v.png   -- vertically flipped
+  default_chest_lock_hushifted_a.png -- hue shifted
+  default_chest_lock_majormod.png    -- heavily modified
+  default_chest_lock_rotated.png     -- rotated
+  default_chest_lock_slightmod.png   -- lightly modified
