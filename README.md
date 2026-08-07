@@ -52,3 +52,34 @@ default_chest_lock_flipped_v.png
 ```
 
 See SOURCES.md for how the committed hashdb_*.json files were built.
+
+## split_atlas_frames.py
+
+Copies a texture directory into a cleaned-up output dir, for use as input to
+build_ref_hash.py: excludes given directories and slices any
+`*.png.mcmeta`-linked vertical animation strip into individual per-frame
+images.
+
+   `python split_atlas_frames.py <src_dir> <output_dir> [--exclude DIR ...]`
+
+- `src_dir` - source texture directory to scan recursively
+- `output_dir` - directory to write the cleaned/split copy to
+- `--exclude` - directory name to exclude (path component match, repeatable),
+  default: `font`, `gui`
+
+## trim_solid_color_matches.py
+
+Trims a hash database (as built by build_ref_hash.py) of entries that are
+near-exact matches to flat/solid reference swatches (sample_colors/ by
+default), using check_package.py's combined phash/dhash distance metric.
+
+   `python trim_solid_color_matches.py <input.json> [-o output.json] [--refs-dir DIR] [--threshold N] [--dry-run]`
+
+- `input_json` - hash database JSON to trim
+- `-o, --output` - path to write the trimmed database, default:
+  `<input>_trimmed.json`
+- `--refs-dir` - directory of flat/solid reference swatches, default:
+  `sample_colors/`
+- `--threshold` - max combined distance (exclusive) to count as a match,
+  default: 1
+- `--dry-run` - report what would be removed without writing a file
