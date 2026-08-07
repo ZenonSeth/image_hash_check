@@ -59048,45 +59048,6 @@
       }
     },
     {
-      "path": "misc/enchanted_item_glint.png",
-      "width": 64,
-      "height": 64,
-      "hashes": {
-        "rot0": {
-          "phash": "9200000000000000",
-          "dhash": "cccccccccccccccc"
-        },
-        "rot0_flip": {
-          "phash": "c700000000000000",
-          "dhash": "4c4c4c4c4c4c4c4c"
-        },
-        "rot90": {
-          "phash": "8080000000808080",
-          "dhash": "0000000000000000"
-        },
-        "rot90_flip": {
-          "phash": "8080000000808080",
-          "dhash": "0000000000000000"
-        },
-        "rot180": {
-          "phash": "c700000000000000",
-          "dhash": "4c4c4c4c4c4c4c4c"
-        },
-        "rot180_flip": {
-          "phash": "9200000000000000",
-          "dhash": "cccccccccccccccc"
-        },
-        "rot270": {
-          "phash": "8000008000008000",
-          "dhash": "0000000000000000"
-        },
-        "rot270_flip": {
-          "phash": "8000008000008000",
-          "dhash": "0000000000000000"
-        }
-      }
-    },
-    {
       "path": "misc/forcefield.png",
       "width": 16,
       "height": 16,
