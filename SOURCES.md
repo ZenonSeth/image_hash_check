@@ -6,10 +6,9 @@ hashdb_*.json here is trimmed, see "Trimmed variants" below. full/hashdb_*.json
 holds the untrimmed originals.
 
 - hashdb_mtg.json: Minetest Game by the Luanti core team, release 30744. No
-  commit hash available. Media is CC BY-SA 3.0, see mtg_textures/LICENSE.txt.
-  Source images copied into mtg_textures/, per-mod textures/ dirs, along
-  with each mod's README.txt for author attribution referenced by
-  LICENSE.txt.
+  commit hash available. Media is CC BY-SA 3.0, per-mod README.txt for
+  author attribution. Source images were NOT copied into this repo - only
+  hashes/filenames were recorded, 447 entries.
 - hashdb_mineclonia.json: Mineclonia, release 33876. No commit hash
   available. Code is GPLv3-or-later; media is CC BY-SA 4.0 per-asset, see
   LEGAL.md, based substantially on the Pixel Perfection and Pixel

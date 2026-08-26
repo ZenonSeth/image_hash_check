@@ -5,8 +5,7 @@ under rotation/flip/hue/edit variations.
 Original: mods/default/textures/default_chest_lock.png
 Original author: BlockMen
 Original license: CC BY-SA 3.0
-Source: Minetest Game, see ../mtg_textures/LICENSE.txt and
-../mtg_textures/default/README.txt
+Source: Minetest Game, https://github.com/minetest/minetest_game
 
 Derivatives, all CC BY-SA 3.0, same as the original:
   default_chest_lock_flipped_v.png   -- vertically flipped

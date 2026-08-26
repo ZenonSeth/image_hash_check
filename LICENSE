@@ -1,7 +1,12 @@
-This license covers the tool's own code (build_ref_hash.py, check_package.py)
-under SPDX-License-Identifier: LGPL-2.0-or-later. It does not cover the
-reference texture data in mtg_textures/, which is licensed separately, see
-mtg_textures/LICENSE.txt.
+This license covers the tool's own code (build_ref_hash.py, check_package.py,
+find_possible_atlases.py, split_atlas_frames.py, trim_solid_color_matches.py)
+under SPDX-License-Identifier: LGPL-2.0-or-later.
+
+The solid-color swatches in sample_colors/ are original, trivial images
+created for this tool and are dedicated to the public domain under
+SPDX-License-Identifier: CC0-1.0.
+
+Other media bundled for testing is licensed separately, see test/LICENSE.
 
                   GNU LIBRARY GENERAL PUBLIC LICENSE
                        Version 2, June 1991
