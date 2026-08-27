@@ -65,15 +65,13 @@ def main():
     )
     parser.add_argument("-p", "--package", required=True, help="directory of the extracted package to scan")
     parser.add_argument("-d", "--db", nargs="+", required=True, help="one or more hash database JSON files to check against")
+    tier_names = [name for _, name in TIERS]
+    parser.add_argument("-c", "--confidence", choices=tier_names, default="possible",
+                         help=f"lowest-confidence tier to report, one of {tier_names}. Matches at or above "
+                              f"this tier's confidence, i.e. hamming distance at or below its bound, are "
+                              f"printed. Default: possible ({TIERS[2][0]})")
     parser.add_argument("--threshold", type=int, default=None,
-                         help=f"max hamming distance to report as a match, default: {TIERS[-2][0]}, the "
-                              f"'possible' tier bound, {TIERS[-1][0]} with --include-weak, or {TIERS[1][0]} "
-                              f"with --strong-only. Overrides --include-weak/--strong-only when set")
-    parser.add_argument("-w", "--include-weak", action="store_true",
-                         help="also report 'weak' tier matches, excluded by default as too noisy")
-    parser.add_argument("-s", "--strong-only", action="store_true",
-                         help="only report 'strong'/'exact' tier matches, excluding 'possible' and 'weak'. "
-                              "Takes precedence over --include-weak if both are given")
+                         help="max hamming distance to report as a match, overrides --confidence when set")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -82,12 +80,7 @@ def main():
     args = parser.parse_args()
 
     if args.threshold is None:
-        if args.strong_only:
-            args.threshold = TIERS[1][0]
-        elif args.include_weak:
-            args.threshold = TIERS[-1][0]
-        else:
-            args.threshold = TIERS[-2][0]
+        args.threshold = next(bound for bound, name in TIERS if name == args.confidence)
 
     dbs = [load_db(p) for p in args.db]
 
