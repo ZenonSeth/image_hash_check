@@ -67,10 +67,13 @@ def main():
     parser.add_argument("-d", "--db", nargs="+", required=True, help="one or more hash database JSON files to check against")
     parser.add_argument("--threshold", type=int, default=None,
                          help=f"max hamming distance to report as a match, default: {TIERS[-2][0]}, the "
-                              f"'possible' tier bound, or {TIERS[-1][0]} with --include-weak. Overrides "
-                              f"--include-weak when set")
+                              f"'possible' tier bound, {TIERS[-1][0]} with --include-weak, or {TIERS[1][0]} "
+                              f"with --strong-only. Overrides --include-weak/--strong-only when set")
     parser.add_argument("-w", "--include-weak", action="store_true",
                          help="also report 'weak' tier matches, excluded by default as too noisy")
+    parser.add_argument("-s", "--strong-only", action="store_true",
+                         help="only report 'strong'/'exact' tier matches, excluding 'possible' and 'weak'. "
+                              "Takes precedence over --include-weak if both are given")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -79,7 +82,12 @@ def main():
     args = parser.parse_args()
 
     if args.threshold is None:
-        args.threshold = TIERS[-1][0] if args.include_weak else TIERS[-2][0]
+        if args.strong_only:
+            args.threshold = TIERS[1][0]
+        elif args.include_weak:
+            args.threshold = TIERS[-1][0]
+        else:
+            args.threshold = TIERS[-2][0]
 
     dbs = [load_db(p) for p in args.db]
 
