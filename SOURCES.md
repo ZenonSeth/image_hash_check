@@ -34,22 +34,27 @@ re-trimmed.
     mods/ and textures/ path components, before running build_ref_hash.py.
     No mod name collisions were found in any of the three games, so this
     flattening is lossless.
-- hashdb_mc_1.13.2.json / hashdb_mc_1.21.11.json: Minecraft Java Edition
-  default resource pack, versions 1.13.2 and 1.21.11, source jars/repos not
-  tracked here. All rights reserved by Mojang/Microsoft - used strictly for
-  lead-generation hash comparison, no images redistributed, hashes and
-  filenames only, 1580 / 3513 entries in full/. particle/sculk_charge_0.png
-  was additionally removed by hand from 1.21.11 after rebuild - way too many
-  false-positive matches to be a useful reference entry. Pre-processed with
-  split_atlas_frames.py before hashing:
+- hashdb_mc_1.13.2.json / hashdb_mc_1.21.11.json / hashdb_mc_26.1.json:
+  Minecraft Java Edition default resource pack, versions 1.13.2, 1.21.11,
+  and 26.1, sourced from https://github.com/Faithful-Pack/Default-Java
+  (branches "1.13.2", "1.21.11", "26.1" respectively -
+  mc_textures/Default-Java-1.13.2, mc_textures/Default-Java-1.21.11,
+  mc_textures/Default-Java-26.1 here), not the original jars. All rights
+  reserved by Mojang/Microsoft - used strictly for lead-generation hash
+  comparison, no images redistributed, hashes and filenames only, 1580 /
+  3513 / 3660 entries in full/. particle/sculk_charge_0.png was excluded
+  from both 1.21.11 (removed by hand after rebuild) and 26.1 (excluded via
+  --exclude-file up front) - way too many false-positive matches to be a
+  useful reference entry. Pre-processed with split_atlas_frames.py before
+  hashing:
   - excludes font/ and gui/ - glyph atlases and UI chrome, not comparable to
     in-game textures a package might reuse
-  - excludes trims/entity/, 1.21.11 only - thin trim overlay line patterns,
-    too generic to be useful reference textures
+  - excludes trims/entity/, 1.21.11 and 26.1 only - thin trim overlay line
+    patterns, too generic to be useful reference textures
   - excludes specific generic/low-value files: map/map_icons.png,
     particle/particles.png, 1.13.2 only, tiny generic icon atlases,
     misc/vignette.png, misc/shadow.png, misc/nausea.png,
-    mob_effect/nausea.png, misc/credits_vignette.png, 1.21.11 only
+    mob_effect/nausea.png, misc/credits_vignette.png, 1.21.11 and 26.1 only
   - slices any *.png.mcmeta-linked vertical animation strip into individual
     per-frame images, e.g. campfire_fire.png, 16x128, splits into 8 stacked
     16x16 frames
@@ -67,6 +72,7 @@ re-trimmed.
 Counts trimmed, removed over total:
 - mc_1.13.2: 21/1580
 - mc_1.21.11: 27/3513
+- mc_26.1: 28/3660
 - mtg: 4/447
 - mineclonia: 552/3236
 - voxelibre: 546/2883
