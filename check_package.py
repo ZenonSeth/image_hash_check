@@ -15,9 +15,9 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".tga", ".bmp"}
 # distances, can be tunned
 TIERS = [
     (0, "exact"),
-    (6, "strong"),
-    (12, "possible"),
-    (20, "weak"),
+    (24, "strong"),
+    (48, "possible"),
+    (80, "weak"),
 ]
 
 
@@ -94,8 +94,8 @@ def main():
         except Exception as e:
             print(f"skip {path}: {e}", file=sys.stderr)
             continue
-        phash = imagehash.phash(img)
-        dhash = imagehash.dhash(img)
+        phash = imagehash.phash(img, hash_size=16)
+        dhash = imagehash.dhash(img, hash_size=16)
 
         for pack_name, entries in dbs:
             for entry in entries:

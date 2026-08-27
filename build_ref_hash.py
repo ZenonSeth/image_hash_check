@@ -52,8 +52,8 @@ def main():
         hashes = {}
         for name, variant in orientation_variants(img).items():
             hashes[name] = {
-                "phash": str(imagehash.phash(variant)),
-                "dhash": str(imagehash.dhash(variant)),
+                "phash": str(imagehash.phash(variant, hash_size=16)),
+                "dhash": str(imagehash.dhash(variant, hash_size=16)),
             }
 
         entries.append({

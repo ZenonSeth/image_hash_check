@@ -34,21 +34,21 @@ the closest one.
 
 - `-p, --package` - directory of the extracted package to scan
 - `-d, --db` - one or more hash database JSON files to check against
-- `--threshold` - max hamming distance to report as a match, default: 12,
-  the "possible" tier bound, or 20 with `-w`. Overrides `-w` when set
+- `--threshold` - max hamming distance to report as a match, default: 48,
+  the "possible" tier bound, or 80 with `-w`. Overrides `-w` when set
 - `-w, --include-weak` - also report "weak" tier matches, excluded by
   default as too noisy
 
-Matches are labeled with a confidence tier based on hamming distance:
-0=exact, <=6=strong, <=12=possible, <=20=weak. See `TIERS` in
-check_package.py; these are heuristic starting points, to be tuned against
-real test data. Output is grouped by package file, closest match first
-within each group:
+Matches are labeled with a confidence tier based on hamming distance (using
+16x16 phash/dhash, i.e. 256-bit hashes): 0=exact, <=24=strong, <=48=possible,
+<=80=weak. See `TIERS` in check_package.py; these are heuristic starting
+points, to be tuned against real test data. Output is grouped by package
+file, closest match first within each group:
 
 ```
 default_chest_lock_flipped_v.png
 - exact (0.0): mtg:default/default_chest_lock.png [rot180_flip]  (phash=0 dhash=0)
-- possible (12.0): mtg:default/default_chest_front.png [rot180_flip]  (phash=12 dhash=12)
+- possible (48.0): mtg:default/default_chest_front.png [rot180_flip]  (phash=48 dhash=48)
 ```
 
 See SOURCES.md for how the committed hashdb_*.json files were built.
@@ -81,5 +81,5 @@ default), using check_package.py's combined phash/dhash distance metric.
 - `--refs-dir` - directory of flat/solid reference swatches, default:
   `sample_colors/`
 - `--threshold` - max combined distance (exclusive) to count as a match,
-  default: 1
+  default: 4
 - `--dry-run` - report what would be removed without writing a file

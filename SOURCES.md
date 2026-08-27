@@ -5,26 +5,42 @@ Each hashdb_*.json is generated with build_ref_hash.py. Record source, version/c
 hashdb_*.json here is trimmed, see "Trimmed variants" below. full/hashdb_*.json
 holds the untrimmed originals.
 
-- hashdb_mtg.json: Minetest Game by the Luanti core team, release 30744. No
+All hashdb_*.json here use imagehash's 16x16 (hash_size=16) phash/dhash grid,
+not the library default of 8x8. Rebuilt 2026-08-27 for this reason - any db
+built with the old 8x8 hashes is incompatible and must be rebuilt, not just
+re-trimmed.
+
+- hashdb_mtg.json: Minetest Game by the Luanti core team, release 38214. No
   commit hash available. Media is CC BY-SA 3.0, per-mod README.txt for
-  author attribution. Source images were NOT copied into this repo - only
-  hashes/filenames were recorded, 447 entries.
-- hashdb_mineclonia.json: Mineclonia, release 33876. No commit hash
+  author attribution. Built from a local game install (games/minetest_game
+  under minetest-build), not downloaded separately. Source images were NOT
+  copied into this repo - only hashes/filenames were recorded, 447 entries.
+- hashdb_mineclonia.json: Mineclonia, release 37652. No commit hash
   available. Code is GPLv3-or-later; media is CC BY-SA 4.0 per-asset, see
   LEGAL.md, based substantially on the Pixel Perfection and Pixel
-  Perfection Legacy resource packs. Source images were NOT copied into this
-  repo - only hashes/filenames were recorded, 2859 entries.
-- hashdb_voxelibre.json: VoxeLibre, formerly MineClone2, version 0.89.3,
-  release 30845. No commit hash available. Code is GPLv3-or-later; media is
+  Perfection Legacy resource packs. Built from a local game install
+  (games/mineclonia under minetest-build). Source images were NOT copied
+  into this repo - only hashes/filenames were recorded, 3236 entries.
+- hashdb_voxelibre.json: VoxeLibre, formerly MineClone2, version 0.92.1,
+  release 37921. No commit hash available. Code is GPLv3-or-later; media is
   CC BY-SA 4.0 / CC BY 4.0 per-asset, see LEGAL.md, based substantially on
-  the Pixel Perfection resource pack by XSSheep. Source images were NOT
-  copied into this repo - only hashes/filenames were recorded, 2874
-  entries, same policy as hashdb_mc_1.13.2.json below.
+  the Pixel Perfection resource pack by XSSheep. Built from a local game
+  install (games/mineclone2 under minetest-build). Source images were NOT
+  copied into this repo - only hashes/filenames were recorded, 2883
+  entries.
+  - mtg/mineclonia/voxelibre were each pre-processed by flattening every
+    mod's textures/ directory into a top-level <mod_name>/ directory (e.g.
+    mods/beds/textures/beds_bed.png -> beds/beds_bed.png), dropping the
+    mods/ and textures/ path components, before running build_ref_hash.py.
+    No mod name collisions were found in any of the three games, so this
+    flattening is lossless.
 - hashdb_mc_1.13.2.json / hashdb_mc_1.21.11.json: Minecraft Java Edition
   default resource pack, versions 1.13.2 and 1.21.11, source jars/repos not
   tracked here. All rights reserved by Mojang/Microsoft - used strictly for
   lead-generation hash comparison, no images redistributed, hashes and
-  filenames only, 1580 / 3514 entries in full/. Pre-processed with
+  filenames only, 1580 / 3513 entries in full/. particle/sculk_charge_0.png
+  was additionally removed by hand from 1.21.11 after rebuild - way too many
+  false-positive matches to be a useful reference entry. Pre-processed with
   split_atlas_frames.py before hashing:
   - excludes font/ and gui/ - glyph atlases and UI chrome, not comparable to
     in-game textures a package might reuse
@@ -50,7 +66,7 @@ holds the untrimmed originals.
 
 Counts trimmed, removed over total:
 - mc_1.13.2: 21/1580
-- mc_1.21.11: 35/3514
+- mc_1.21.11: 27/3513
 - mtg: 4/447
-- mineclonia: 338/2859
-- voxelibre: 546/2874
+- mineclonia: 552/3236
+- voxelibre: 546/2883

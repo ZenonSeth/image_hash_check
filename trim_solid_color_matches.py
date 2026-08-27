@@ -29,8 +29,8 @@ def load_reference_hashes(refs_dir):
         img = Image.open(path).convert("RGBA")
         refs.append({
             "name": path.name,
-            "phash": str(imagehash.phash(img)),
-            "dhash": str(imagehash.dhash(img)),
+            "phash": str(imagehash.phash(img, hash_size=16)),
+            "dhash": str(imagehash.dhash(img, hash_size=16)),
         })
     return refs
 
@@ -66,10 +66,10 @@ def main():
         help=f"directory of flat/solid reference swatches to trim against. Default: {DEFAULT_REFS_DIR}"
     )
     parser.add_argument(
-        "--threshold", type=float, default=1,
+        "--threshold", type=float, default=4,
         help="max combined phash/dhash distance (exclusive) to count as a solid-color match, using "
              "the same (2*lower + higher)/3 weighting check_package.py uses for real matches. "
-             "Default: 1 (near-exact only)"
+             "Default: 4 (near-exact only)"
     )
     parser.add_argument(
         "--dry-run", action="store_true",
