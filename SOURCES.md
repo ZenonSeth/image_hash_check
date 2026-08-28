@@ -10,60 +10,38 @@ not the library default of 8x8. Rebuilt 2026-08-27 for this reason - any db
 built with the old 8x8 hashes is incompatible and must be rebuilt, not just
 re-trimmed.
 
-- hashdb_mtg.json: Minetest Game by the Luanti core team, release 38214. No
-  commit hash available. Media is CC BY-SA 3.0, per-mod README.txt for
-  author attribution. Built from a local game install (games/minetest_game
-  under minetest-build), not downloaded separately. Source images were NOT
-  copied into this repo - only hashes/filenames were recorded, 447 entries.
-- hashdb_mineclonia.json: Mineclonia, release 37652. No commit hash
-  available. Code is GPLv3-or-later; media is CC BY-SA 4.0 per-asset, see
-  LEGAL.md, based substantially on the Pixel Perfection and Pixel
-  Perfection Legacy resource packs. Built from a local game install
-  (games/mineclonia under minetest-build). Source images were NOT copied
-  into this repo - only hashes/filenames were recorded, 3236 entries.
-- hashdb_voxelibre.json: VoxeLibre, formerly MineClone2, version 0.92.1,
-  release 37921. No commit hash available. Code is GPLv3-or-later; media is
-  CC BY-SA 4.0 / CC BY 4.0 per-asset, see LEGAL.md, based substantially on
-  the Pixel Perfection resource pack by XSSheep. Built from a local game
-  install (games/mineclone2 under minetest-build). Source images were NOT
-  copied into this repo - only hashes/filenames were recorded, 2883
-  entries.
-  - mtg/mineclonia/voxelibre were each pre-processed by flattening every
-    mod's textures/ directory into a top-level <mod_name>/ directory (e.g.
-    mods/beds/textures/beds_bed.png -> beds/beds_bed.png), dropping the
-    mods/ and textures/ path components, before running build_ref_hash.py.
-    No mod name collisions were found in any of the three games, so this
-    flattening is lossless.
+- hashdb_mtg.json: Minetest Game, release 38214. CC BY-SA 3.0 media. Built
+  from a local game install, images not copied into this repo, 447 entries.
+- hashdb_mineclonia.json: Mineclonia, release 37652. GPLv3-or-later code,
+  CC BY-SA 4.0 media (see LEGAL.md), based on Pixel Perfection / Pixel
+  Perfection Legacy. Built from a local game install, images not copied
+  into this repo, 3236 entries.
+- hashdb_voxelibre.json: VoxeLibre (MineClone2), 0.92.1, release 37921.
+  GPLv3-or-later code, CC BY-SA 4.0 / CC BY 4.0 media (see LEGAL.md), based
+  on Pixel Perfection by XSSheep. Built from a local game install, images
+  not copied into this repo, 2883 entries.
+  - mtg/mineclonia/voxelibre were each flattened (mods/<mod>/textures/*.png
+    -> <mod>/*.png) before hashing; no mod name collisions across the three.
 - hashdb_mc_1.13.2.json / hashdb_mc_1.21.11.json / hashdb_mc_26.1.json:
   Minecraft Java Edition default resource pack, versions 1.13.2, 1.21.11,
-  and 26.1, sourced from https://github.com/Faithful-Pack/Default-Java
-  (branches "1.13.2", "1.21.11", "26.1" respectively -
-  mc_textures/Default-Java-1.13.2, mc_textures/Default-Java-1.21.11,
-  mc_textures/Default-Java-26.1 here), not the original jars. All rights
-  reserved by Mojang/Microsoft - used strictly for lead-generation hash
-  comparison, no images redistributed, hashes and filenames only, 1580 /
-  3513 / 3660 entries in full/. particle/sculk_charge_0.png was excluded
-  from both 1.21.11 (removed by hand after rebuild) and 26.1 (excluded via
-  --exclude-file up front) - way too many false-positive matches to be a
-  useful reference entry. Pre-processed with split_atlas_frames.py before
-  hashing:
-  - excludes font/ and gui/ - glyph atlases and UI chrome, not comparable to
-    in-game textures a package might reuse
-  - excludes trims/entity/, 1.21.11 and 26.1 only - thin trim overlay line
-    patterns, too generic to be useful reference textures
-  - excludes specific generic/low-value files: map/map_icons.png,
-    particle/particles.png, 1.13.2 only, tiny generic icon atlases,
-    misc/vignette.png, misc/shadow.png, misc/nausea.png,
-    mob_effect/nausea.png, misc/credits_vignette.png, 1.21.11 and 26.1 only
-  - slices any *.png.mcmeta-linked vertical animation strip into individual
-    per-frame images, e.g. campfire_fire.png, 16x128, splits into 8 stacked
-    16x16 frames
-  - block/item/entity textures needed no splitting, already individual
-    files in this source. 1.21.11's painting/ is likewise already
-    individual files. 1.13.2's old painting/paintings_kristoffer_zetterstrand.png
-    sprite sheet was excluded and manually split by hand into
-    painting_manual_split/ instead, since it isn't auto-splittable - variable-sized
-    regions, not a uniform grid
+  26.1, sourced from https://github.com/Faithful-Pack/Default-Java branches
+  "1.13.2"/"1.21.11"/"26.1", not the original jars. All rights reserved by
+  Mojang/Microsoft, hashes/filenames only, no images redistributed. 1580 /
+  3513 / 3660 entries in full/. particle/sculk_charge_0.png excluded from
+  all three (too many false positives). 1.13.2 only had sprite-sheet
+  atlases needing split_atlas_frames.py (paintings split by hand, other
+  animation strips auto-split via *.png.mcmeta); 1.21.11/26.1 ship
+  per-frame files already, no atlas splitting needed. font/, gui/,
+  trims/entity/ (1.21.11+26.1 only), and misc vignette/shadow/nausea/
+  credits_vignette (1.21.11+26.1 only) excluded as noisy/not comparable.
+- hashdb_mc_26.2.json: Minecraft Java Edition default resource pack,
+  version 26.2, sourced from the official client jar (no matching branch on
+  Faithful-Pack/Default-Java; that repo's java-latest branch has many/most
+  of the same textures but isn't the source used here). No atlases.
+  particle/sculk_charge_0.png excluded from full/ by hand. font/, gui/,
+  trims/entity/, and misc vignette/shadow/nausea/credits_vignette - the
+  same exclusion list as 1.21.11/26.1 - removed by hand from the trimmed
+  json only, not from full/ 
 
 ## Trimmed variants
 
@@ -73,6 +51,7 @@ Counts trimmed, removed over total:
 - mc_1.13.2: 21/1580
 - mc_1.21.11: 27/3513
 - mc_26.1: 28/3660
+- mc_26.2: 50/??
 - mtg: 4/447
 - mineclonia: 552/3236
 - voxelibre: 546/2883
