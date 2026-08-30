@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 mc_textures/
 mc_textures_split/
+web_cache/
+

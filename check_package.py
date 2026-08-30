@@ -8,6 +8,7 @@ from PIL import Image
 import imagehash
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".tga", ".bmp"}
+DEFAULT_SOLID_REFS_DIR = Path(__file__).parent / "sample_colors"
 
 # This tool surfaces *possible* matches for a human reviewer to judge, so it
 # leans toward over-reporting rather than silently dropping anything that
@@ -44,6 +45,30 @@ def combined_distance(pd, dd):
     return (2 * smaller + larger) / 3
 
 
+# Same weighting as combined_distance above, used to decide if a package image
+# is itself close to a flat/solid swatch (sample_colors), same logic as
+# trim_solid_color_matches.py uses to trim solid entries out of the ref DBs.
+def load_solid_refs(refs_dir):
+    refs = []
+    for path in sorted(Path(refs_dir).rglob("*")):
+        if path.suffix.lower() not in IMAGE_EXTS:
+            continue
+        img = Image.open(path).convert("RGBA")
+        refs.append({
+            "phash": imagehash.phash(img, hash_size=16),
+            "dhash": imagehash.dhash(img, hash_size=16),
+        })
+    return refs
+
+
+def is_solid(phash, dhash, solid_refs, threshold):
+    for ref in solid_refs:
+        dist = combined_distance(phash - ref["phash"], dhash - ref["dhash"])
+        if dist < threshold:
+            return True
+    return False
+
+
 def best_match(phash, dhash, entry):
     best = None
     for transform, hashes in entry["hashes"].items():
@@ -72,6 +97,14 @@ def main():
                               f"printed. Default: possible ({TIERS[2][0]})")
     parser.add_argument("--threshold", type=int, default=None,
                          help="max hamming distance to report as a match, overrides --confidence when set")
+    parser.add_argument("--solid-refs-dir", default=str(DEFAULT_SOLID_REFS_DIR),
+                         help=f"directory of flat/solid reference swatches to skip package images against, "
+                              f"same refs trim_solid_color_matches.py uses. Default: {DEFAULT_SOLID_REFS_DIR}")
+    parser.add_argument("--solid-threshold", type=float, default=4,
+                         help="max combined phash/dhash distance (exclusive) for a package image to be "
+                              "treated as solid/flat and skipped entirely. Default: 4 (near-exact only)")
+    parser.add_argument("--no-solid-skip", action="store_true",
+                         help="disable the solid-color pre-filter and compare every image against the db(s)")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -83,6 +116,10 @@ def main():
         args.threshold = next(bound for bound, name in TIERS if name == args.confidence)
 
     dbs = [load_db(p) for p in args.db]
+
+    solid_refs = [] if args.no_solid_skip else load_solid_refs(args.solid_refs_dir)
+    if not args.no_solid_skip and not solid_refs:
+        print(f"no solid reference images found in {args.solid_refs_dir}", file=sys.stderr)
 
     pkg_dir = Path(args.package)
     results = []
@@ -96,6 +133,9 @@ def main():
             continue
         phash = imagehash.phash(img, hash_size=16)
         dhash = imagehash.dhash(img, hash_size=16)
+
+        if solid_refs and is_solid(phash, dhash, solid_refs, args.solid_threshold):
+            continue
 
         for pack_name, entries in dbs:
             for entry in entries:
