@@ -63,6 +63,15 @@ def tier_for(dist):
     return "outlier"
 
 
+def parse_package_arg(raw):
+    # "dir" or "dir:label" - label defaults to the directory's own name.
+    # view_matches.py's HEADER_RE parses the printed "== label (dir)" line
+    # this produces, to resolve source paths when browsing several games'
+    # combined results (see resolve_source_path in view_matches.py).
+    dir_part, _, label = raw.partition(":")
+    return dir_part, label or Path(dir_part).name
+
+
 def load_db(path):
     with open(path) as f:
         data = json.load(f)
@@ -135,6 +144,48 @@ def best_match(phash, dhash, entry):
     return best
 
 
+def scan_package(pkg_dir, dbs, solid_refs, args):
+    results = []
+    for path in sorted(pkg_dir.rglob("*")):
+        if path.suffix.lower() not in IMAGE_EXTS:
+            continue
+        try:
+            img = Image.open(path).convert("RGBA")
+        except Exception as e:
+            print(f"skip {path}: {e}", file=sys.stderr)
+            continue
+        phash = hash_to_int(profile("phash_compute", imagehash.phash, img, hash_size=16))
+        dhash = hash_to_int(profile("dhash_compute", imagehash.dhash, img, hash_size=16))
+
+        if solid_refs and is_solid(phash, dhash, solid_refs, args.solid_threshold):
+            continue
+
+        for pack_name, entries in dbs:
+            for entry in entries:
+                dist, transform, pd, dd = best_match(phash, dhash, entry)
+                if dist <= args.threshold:
+                    tier = tier_for(dist)
+                    results.append((dist, tier, str(path.relative_to(pkg_dir)), pack_name, entry["path"], transform, pd, dd))
+    return results
+
+
+def print_results(results):
+    by_pkg_path = defaultdict(list)
+    for dist, tier, pkg_path, pack_name, ref_path, transform, pd, dd in results:
+        by_pkg_path[pkg_path].append((dist, tier, pack_name, ref_path, transform, pd, dd))
+
+    for i, pkg_path in enumerate(sorted(by_pkg_path)):
+        if i:
+            print()
+        print(pkg_path)
+        for dist, tier, pack_name, ref_path, transform, pd, dd in sorted(by_pkg_path[pkg_path]):
+            orientation = "" if transform == "rot0" else f" [{transform}]"
+            print(f"- {tier} ({dist:.1f}): {pack_name}:{ref_path}{orientation}  (phash={pd} dhash={dd})")
+
+    if not results:
+        print("no matches found")
+
+
 def main():
     global PROFILE_ENABLED
     parser = argparse.ArgumentParser(
@@ -144,7 +195,14 @@ def main():
                      "a lead-generation tool for a human reviewer, not a verdict - it favors flagging "
                      "low-confidence matches over missing real reuse."
     )
-    parser.add_argument("-p", "--package", required=True, help="directory of the extracted package to scan")
+    parser.add_argument("-p", "--package", required=True, nargs="+",
+                         help="one or more directories of extracted packages to scan, each as 'dir' "
+                              "or 'dir:label' (label defaults to the directory's basename). When more "
+                              "than one is given, or a label is given, an '== label (dirname)' header "
+                              "is printed before each package's results - dirname is dir's basename, "
+                              "which view_matches.py parses to resolve each match's source image "
+                              "under a common parent folder when browsing a result file spanning "
+                              "several games")
     parser.add_argument("-d", "--db", nargs="+", required=True, help="one or more hash database JSON files to check against")
     tier_names = [name for _, name in TIERS]
     parser.add_argument("-c", "--confidence", choices=tier_names, default="possible",
@@ -182,43 +240,16 @@ def main():
     if not args.no_solid_skip and not solid_refs:
         print(f"no solid reference images found in {args.solid_refs_dir}", file=sys.stderr)
 
-    pkg_dir = Path(args.package)
-    results = []
-    for path in sorted(pkg_dir.rglob("*")):
-        if path.suffix.lower() not in IMAGE_EXTS:
-            continue
-        try:
-            img = Image.open(path).convert("RGBA")
-        except Exception as e:
-            print(f"skip {path}: {e}", file=sys.stderr)
-            continue
-        phash = hash_to_int(profile("phash_compute", imagehash.phash, img, hash_size=16))
-        dhash = hash_to_int(profile("dhash_compute", imagehash.dhash, img, hash_size=16))
+    package_specs = [parse_package_arg(p) for p in args.package]
+    show_header = len(package_specs) > 1 or any(":" in p for p in args.package)
 
-        if solid_refs and is_solid(phash, dhash, solid_refs, args.solid_threshold):
-            continue
-
-        for pack_name, entries in dbs:
-            for entry in entries:
-                dist, transform, pd, dd = best_match(phash, dhash, entry)
-                if dist <= args.threshold:
-                    tier = tier_for(dist)
-                    results.append((dist, tier, str(path.relative_to(pkg_dir)), pack_name, entry["path"], transform, pd, dd))
-
-    by_pkg_path = defaultdict(list)
-    for dist, tier, pkg_path, pack_name, ref_path, transform, pd, dd in results:
-        by_pkg_path[pkg_path].append((dist, tier, pack_name, ref_path, transform, pd, dd))
-
-    for i, pkg_path in enumerate(sorted(by_pkg_path)):
+    for i, (pkg_dir_raw, label) in enumerate(package_specs):
         if i:
             print()
-        print(pkg_path)
-        for dist, tier, pack_name, ref_path, transform, pd, dd in sorted(by_pkg_path[pkg_path]):
-            orientation = "" if transform == "rot0" else f" [{transform}]"
-            print(f"- {tier} ({dist:.1f}): {pack_name}:{ref_path}{orientation}  (phash={pd} dhash={dd})")
-
-    if not results:
-        print("no matches found")
+        if show_header:
+            print(f"== {label} ({Path(pkg_dir_raw).name})")
+        results = scan_package(Path(pkg_dir_raw), dbs, solid_refs, args)
+        print_results(results)
 
     if PROFILE_ENABLED:
         print(f"\ntotal wall time: {time.perf_counter() - wall_start:.3f}s", file=sys.stderr)
