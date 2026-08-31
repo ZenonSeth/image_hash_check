@@ -252,7 +252,7 @@ def resolve_source_path(source_folder, item):
     # source_folder may itself be that package dir, or a parent containing
     # several games' package dirs (matching the header's "(game_dir)" part)
     direct = Path(source_folder) / item["source_path"]
-    if direct.exists():
+    if direct.exists() or item["game_dir"] is None:
         return direct
     return Path(source_folder) / item["game_dir"] / item["source_path"]
 

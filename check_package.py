@@ -197,12 +197,11 @@ def main():
     )
     parser.add_argument("-p", "--package", required=True, nargs="+",
                          help="one or more directories of extracted packages to scan, each as 'dir' "
-                              "or 'dir:label' (label defaults to the directory's basename). When more "
-                              "than one is given, or a label is given, an '== label (dirname)' header "
-                              "is printed before each package's results - dirname is dir's basename, "
-                              "which view_matches.py parses to resolve each match's source image "
-                              "under a common parent folder when browsing a result file spanning "
-                              "several games")
+                              "or 'dir:label' (label defaults to the directory's basename). An "
+                              "'== label (dirname)' header is printed before each package's results "
+                              "- dirname is dir's basename, which view_matches.py parses to resolve "
+                              "each match's source image under a common parent folder when browsing "
+                              "a result file spanning several games")
     parser.add_argument("-d", "--db", nargs="+", required=True, help="one or more hash database JSON files to check against")
     tier_names = [name for _, name in TIERS]
     parser.add_argument("-c", "--confidence", choices=tier_names, default="possible",
@@ -241,13 +240,11 @@ def main():
         print(f"no solid reference images found in {args.solid_refs_dir}", file=sys.stderr)
 
     package_specs = [parse_package_arg(p) for p in args.package]
-    show_header = len(package_specs) > 1 or any(":" in p for p in args.package)
 
     for i, (pkg_dir_raw, label) in enumerate(package_specs):
         if i:
             print()
-        if show_header:
-            print(f"== {label} ({Path(pkg_dir_raw).name})")
+        print(f"== {label} ({Path(pkg_dir_raw).name})")
         results = scan_package(Path(pkg_dir_raw), dbs, solid_refs, args)
         print_results(results)
 
