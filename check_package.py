@@ -7,9 +7,18 @@ from pathlib import Path
 
 from PIL import Image
 import imagehash
+import numpy
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".tga", ".bmp"}
 DEFAULT_SOLID_REFS_DIR = Path(__file__).parent / "sample_colors"
+
+
+def hash_to_int(h):
+    return int.from_bytes(numpy.packbits(h.hash.flatten()).tobytes(), "big")
+
+
+def hamming(a, b):
+    return (a ^ b).bit_count()
 
 # Profiling counters, gated behind --profile, printed at the end of main().
 PROFILE_ENABLED = False
@@ -58,11 +67,11 @@ def load_db(path):
     with open(path) as f:
         data = json.load(f)
     entries = data["entries"]
-    # Parse hex hashes once here instead of re-parsing per package image in best_match.
+    # Parse hex hashes to ints once here instead of re-parsing per package image in best_match.
     for entry in entries:
         for hashes in entry["hashes"].values():
-            hashes["phash"] = imagehash.hex_to_hash(hashes["phash"])
-            hashes["dhash"] = imagehash.hex_to_hash(hashes["dhash"])
+            hashes["phash"] = int(hashes["phash"], 16)
+            hashes["dhash"] = int(hashes["dhash"], 16)
     return data["pack_name"], entries
 
 
@@ -85,10 +94,9 @@ def load_solid_refs(refs_dir):
         if path.suffix.lower() not in IMAGE_EXTS:
             continue
         img = Image.open(path).convert("RGBA")
-        refs.append({
-            "phash": profile("phash_compute", imagehash.phash, img, hash_size=16),
-            "dhash": profile("dhash_compute", imagehash.dhash, img, hash_size=16),
-        })
+        phash = profile("phash_compute", imagehash.phash, img, hash_size=16)
+        dhash = profile("dhash_compute", imagehash.dhash, img, hash_size=16)
+        refs.append({"phash": hash_to_int(phash), "dhash": hash_to_int(dhash)})
     return refs
 
 
@@ -96,7 +104,7 @@ def is_solid(phash, dhash, solid_refs, threshold):
     start = time.perf_counter() if PROFILE_ENABLED else None
     found = False
     for ref in solid_refs:
-        dist = combined_distance(phash - ref["phash"], dhash - ref["dhash"])
+        dist = combined_distance(hamming(phash, ref["phash"]), hamming(dhash, ref["dhash"]))
         if dist < threshold:
             found = True
             break
@@ -112,8 +120,8 @@ def best_match(phash, dhash, entry):
     for transform, hashes in entry["hashes"].items():
         if PROFILE_ENABLED:
             hamming_start = time.perf_counter()
-        pd = phash - hashes["phash"]
-        dd = dhash - hashes["dhash"]
+        pd = hamming(phash, hashes["phash"])
+        dd = hamming(dhash, hashes["dhash"])
         if PROFILE_ENABLED:
             PROFILE_TIMES["hamming_distance"] += time.perf_counter() - hamming_start
             PROFILE_COUNTS["hamming_distance"] += 2
@@ -184,8 +192,8 @@ def main():
         except Exception as e:
             print(f"skip {path}: {e}", file=sys.stderr)
             continue
-        phash = profile("phash_compute", imagehash.phash, img, hash_size=16)
-        dhash = profile("dhash_compute", imagehash.dhash, img, hash_size=16)
+        phash = hash_to_int(profile("phash_compute", imagehash.phash, img, hash_size=16))
+        dhash = hash_to_int(profile("dhash_compute", imagehash.dhash, img, hash_size=16))
 
         if solid_refs and is_solid(phash, dhash, solid_refs, args.solid_threshold):
             continue
