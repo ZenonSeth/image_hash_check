@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -9,6 +10,30 @@ import imagehash
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".tga", ".bmp"}
 DEFAULT_SOLID_REFS_DIR = Path(__file__).parent / "sample_colors"
+
+# Profiling counters, gated behind --profile, printed at the end of main().
+PROFILE_ENABLED = False
+PROFILE_TIMES = defaultdict(float)
+PROFILE_COUNTS = defaultdict(int)
+
+
+def profile(label, fn, *args, **kwargs):
+    if not PROFILE_ENABLED:
+        return fn(*args, **kwargs)
+    start = time.perf_counter()
+    result = fn(*args, **kwargs)
+    PROFILE_TIMES[label] += time.perf_counter() - start
+    PROFILE_COUNTS[label] += 1
+    return result
+
+
+def print_profile():
+    print("\n--- profiling ---", file=sys.stderr)
+    for label in sorted(PROFILE_TIMES, key=lambda l: -PROFILE_TIMES[l]):
+        total = PROFILE_TIMES[label]
+        count = PROFILE_COUNTS[label]
+        per_call = (total / count * 1000) if count else 0.0
+        print(f"{label}: {total:.3f}s total, {count} calls, {per_call:.4f}ms/call", file=sys.stderr)
 
 # This tool surfaces *possible* matches for a human reviewer to judge, so it
 # leans toward over-reporting rather than silently dropping anything that
@@ -32,7 +57,13 @@ def tier_for(dist):
 def load_db(path):
     with open(path) as f:
         data = json.load(f)
-    return data["pack_name"], data["entries"]
+    entries = data["entries"]
+    # Parse hex hashes once here instead of re-parsing per package image in best_match.
+    for entry in entries:
+        for hashes in entry["hashes"].values():
+            hashes["phash"] = imagehash.hex_to_hash(hashes["phash"])
+            hashes["dhash"] = imagehash.hex_to_hash(hashes["dhash"])
+    return data["pack_name"], entries
 
 
 # Weighted toward whichever of phash/dhash agrees more, but still pulled up
@@ -55,32 +86,49 @@ def load_solid_refs(refs_dir):
             continue
         img = Image.open(path).convert("RGBA")
         refs.append({
-            "phash": imagehash.phash(img, hash_size=16),
-            "dhash": imagehash.dhash(img, hash_size=16),
+            "phash": profile("phash_compute", imagehash.phash, img, hash_size=16),
+            "dhash": profile("dhash_compute", imagehash.dhash, img, hash_size=16),
         })
     return refs
 
 
 def is_solid(phash, dhash, solid_refs, threshold):
+    start = time.perf_counter() if PROFILE_ENABLED else None
+    found = False
     for ref in solid_refs:
         dist = combined_distance(phash - ref["phash"], dhash - ref["dhash"])
         if dist < threshold:
-            return True
-    return False
+            found = True
+            break
+    if PROFILE_ENABLED:
+        PROFILE_TIMES["solid_compare"] += time.perf_counter() - start
+        PROFILE_COUNTS["solid_compare"] += 1
+    return found
 
 
 def best_match(phash, dhash, entry):
+    start = time.perf_counter() if PROFILE_ENABLED else None
     best = None
     for transform, hashes in entry["hashes"].items():
-        pd = phash - imagehash.hex_to_hash(hashes["phash"])
-        dd = dhash - imagehash.hex_to_hash(hashes["dhash"])
+        if PROFILE_ENABLED:
+            hamming_start = time.perf_counter()
+        pd = phash - hashes["phash"]
+        dd = dhash - hashes["dhash"]
+        if PROFILE_ENABLED:
+            PROFILE_TIMES["hamming_distance"] += time.perf_counter() - hamming_start
+            PROFILE_COUNTS["hamming_distance"] += 2
+
         dist = combined_distance(pd, dd)
         if best is None or dist < best[0]:
             best = (dist, transform, pd, dd)
+    if PROFILE_ENABLED:
+        PROFILE_TIMES["best_match"] += time.perf_counter() - start
+        PROFILE_COUNTS["best_match"] += 1
     return best
 
 
 def main():
+    global PROFILE_ENABLED
     parser = argparse.ArgumentParser(
         description="Check a mod/game/texture pack's images against one or more reference hash "
                      "databases, built with build_ref_hash.py, and report close matches, which may "
@@ -105,6 +153,8 @@ def main():
                               "treated as solid/flat and skipped entirely. Default: 4 (near-exact only)")
     parser.add_argument("--no-solid-skip", action="store_true",
                          help="disable the solid-color pre-filter and compare every image against the db(s)")
+    parser.add_argument("--profile", action="store_true",
+                         help="print timing/call-count profiling breakdown to stderr when done")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -112,10 +162,13 @@ def main():
 
     args = parser.parse_args()
 
+    PROFILE_ENABLED = args.profile
+    wall_start = time.perf_counter() if PROFILE_ENABLED else None
+
     if args.threshold is None:
         args.threshold = next(bound for bound, name in TIERS if name == args.confidence)
 
-    dbs = [load_db(p) for p in args.db]
+    dbs = [profile("load_db", load_db, p) for p in args.db]
 
     solid_refs = [] if args.no_solid_skip else load_solid_refs(args.solid_refs_dir)
     if not args.no_solid_skip and not solid_refs:
@@ -131,8 +184,8 @@ def main():
         except Exception as e:
             print(f"skip {path}: {e}", file=sys.stderr)
             continue
-        phash = imagehash.phash(img, hash_size=16)
-        dhash = imagehash.dhash(img, hash_size=16)
+        phash = profile("phash_compute", imagehash.phash, img, hash_size=16)
+        dhash = profile("dhash_compute", imagehash.dhash, img, hash_size=16)
 
         if solid_refs and is_solid(phash, dhash, solid_refs, args.solid_threshold):
             continue
@@ -158,6 +211,10 @@ def main():
 
     if not results:
         print("no matches found")
+
+    if PROFILE_ENABLED:
+        print(f"\ntotal wall time: {time.perf_counter() - wall_start:.3f}s", file=sys.stderr)
+        print_profile()
 
 
 if __name__ == "__main__":
