@@ -1,8 +1,9 @@
 Copyright (C) 2026 Zenon Seth <Zenon.Seth@gmail.com>
 
 This license covers the tool's own code (build_ref_hash.py, check_all.py,
-check_package.py, find_possible_atlases.py, split_atlas_frames.py,
-trim_solid_color_matches.py) under SPDX-License-Identifier: LGPL-2.0-or-later.
+check_package.py, find_possible_atlases.py, merge_hashes_db.py,
+split_atlas_frames.py, trim_solid_color_matches.py) under
+SPDX-License-Identifier: LGPL-2.0-or-later.
 
 The solid-color swatches in sample_colors/ are original, trivial images
 created for this tool and are dedicated to the public domain under

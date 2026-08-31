@@ -24,6 +24,23 @@ flipped.
 - `output_json` - path to write the hash database
 - `--pack-name` - name recorded in the database, default: textures_dir name
 
+## merge_hashes_db.py
+
+Merges one hash database's entries into another, skipping any entry whose
+rot0 phash+dhash already matches one already in the merged set (e.g. a
+texture unchanged between two Minecraft versions). Not optimized for speed.
+
+   `python merge_hashes_db.py <base.json> <additional.json> <output.json> [--pack-name NAME]`
+
+- `base` - base hash database JSON
+- `additional` - hash database JSON to merge into base
+- `output` - path to write the merged database
+- `--pack-name` - pack_name recorded in the output db, default: base's pack_name
+
+Entries added from `additional` have their `path` prefixed with
+`additional`'s pack_name (e.g. `mc-1.21.11/block/...`), so `check_package.py`
+still shows which source db a match actually came from.
+
 ## check_package.py
 
 Scans a package's images and reports close matches against one or more hash
@@ -66,6 +83,16 @@ images.
 - `output_dir` - directory to write the cleaned/split copy to
 - `--exclude` - directory name to exclude (path component match, repeatable),
   default: `font`, `gui`
+
+## view_matches.py
+
+GUI to browse a `check_package.py` result file, viewing each flagged source
+image side by side with its matched reference texture (fetched online per db).
+
+   `python view_matches.py [result_file] [-s source_folder]`
+
+- `result_file` - a saved `check_package.py` output file; omitted opens a picker
+- `-s, --source-folder` - the package dir passed to `check_package.py -p`; omitted opens a picker
 
 ## trim_solid_color_matches.py
 
