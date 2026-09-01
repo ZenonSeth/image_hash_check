@@ -11,6 +11,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from PIL import Image, ImageTk, ImageOps
 
+from split_atlas_frames import split_frames
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 WEB_CACHE_DIR = SCRIPT_DIR / "web_cache"
 
@@ -49,6 +51,18 @@ REF_SOURCES = {
         "base_url": "https://raw.githubusercontent.com/luanti-org/minetest_game/5.8.0/",
         "flatten_mods": True,
     },
+    # entries' "path" already includes the assets/minecraft/textures/ prefix.
+    # split_atlas_frames.py renamed atlas files to "<stem>_frameN.png", which
+    # don't exist upstream as separate files - split_frames=True tells fetch
+    # to strip that suffix, download the original strip, and crop frame N.
+    "faithful32x": {
+        "base_url": "https://raw.githubusercontent.com/Faithful-Resource-Pack/Faithful-32x-Java/26.1/assets/minecraft/textures/",
+        "split_frames": True,
+    },
+    "faithful64x": {
+        "base_url": "https://raw.githubusercontent.com/Faithful-Resource-Pack/Faithful-64x-Java/26.1/assets/minecraft/textures/",
+        "split_frames": True,
+    },
     # mineclonia's mods live nested under category folders: mods/ITEMS/mcl_foo
     # unlike mtg's flat mods/<mod>/, so the <mod>/<file>.png
     # entries' path can't be reconstructed without looking each mod's real
@@ -71,6 +85,15 @@ REF_SOURCES = {
 }
 
 GITHUB_API = "https://api.github.com"
+FRAME_SUFFIX_RE = re.compile(r"^(.+)_frame(\d+)(\.[^.]+)$")
+
+
+def strip_frame_suffix(path):
+    """'block/foo_frame2.png' -> ('block/foo.png', 2); else (path, None)."""
+    m = FRAME_SUFFIX_RE.match(path)
+    if not m:
+        return path, None
+    return f"{m.group(1)}{m.group(3)}", int(m.group(2))
 
 
 def fetch_github_tree(repo, ref):
@@ -175,7 +198,24 @@ def fetch_reference_image(pack_name, ref_path):
             remote_path = f"{flatten_mods}/{filename}"
         else:
             remote_path = ref_path
+
+        frame_index = None
+        if source.get("split_frames"):
+            remote_path, frame_index = strip_frame_suffix(remote_path)
         content, error = get_url_bytes(source["base_url"] + remote_path)
+
+        if content is not None and frame_index is not None:
+            try:
+                atlas = Image.open(io.BytesIO(content)).convert("RGBA")
+                frames = list(split_frames(atlas, atlas.width))
+                img = frames[frame_index]
+            except (Exception, IndexError) as e:
+                return None, f"failed to crop frame {frame_index} from atlas: {e}"
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_bytes(buf.getvalue())
+            return img, None
 
     if content is None:
         return None, error

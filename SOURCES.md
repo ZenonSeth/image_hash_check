@@ -42,6 +42,18 @@ re-trimmed.
   trims/entity/, and misc vignette/shadow/nausea/credits_vignette - the
   same exclusion list as 1.21.11/26.1 - removed by hand from the trimmed
   json only, not from full/ 
+- hashdb_faithful32x_26.1.json / hashdb_faithful64x_26.1.json: Faithful 32x
+  / Faithful 64x resource packs (Minecraft Java Edition), branch 26.1,
+  commits 2b4da74 / dca492c, from
+  https://github.com/Faithful-Resource-Pack/Faithful-32x-Java and
+  Faithful-64x-Java. Faithful License v4 (custom, attribution-based, not
+  FOSS - see LICENSE.txt in each source dir). Source trees kept locally
+  under _tools/faithful_32x/26.1/ and _tools/faithful_64x/26.1/, not
+  copied into hashesdb/. No full/ variant kept for these two - built and
+  trimmed in place. 57 atlases split via split_atlas_frames.py in each
+  before hashing; font/, gui/, trims/entity/, trims/color_palettes, and
+  misc vignette/shadow/nausea/credits_vignette excluded same as mc_26.2.
+  3580 / 3584 entries after trimming.
 
 ## Trimmed variants
 
@@ -55,3 +67,5 @@ Counts trimmed, removed over total:
 - mtg: 4/447
 - mineclonia: 552/3236
 - voxelibre: 546/2883
+- faithful32x_26.1: 84/3664 (48 solid + 36 misc-path)
+- faithful64x_26.1: 78/3662 (42 solid + 36 misc-path)
