@@ -110,3 +110,5 @@ default), using check_package.py's combined phash/dhash distance metric.
 - `--threshold` - max combined distance (exclusive) to count as a match,
   default: 4
 - `--dry-run` - report what would be removed without writing a file
+
+`trim_solid_color_matches.py` and `trim_misc_hashes.py` are obsolete for normal use - their trims now run by default inside `build_ref_hash.py`, with the same flags.
