@@ -111,4 +111,4 @@ default), using check_package.py's combined phash/dhash distance metric.
   default: 4
 - `--dry-run` - report what would be removed without writing a file
 
-`trim_solid_color_matches.py` and `trim_misc_hashes.py` are obsolete for normal use - their trims now run by default inside `build_ref_hash.py`, with the same flags.
+`build_ref_hash.py` imports and calls the `trim_entries()` functions from both scripts to apply the same trims by default while building a db, with the same flags. Run either script standalone to re-trim an already-built db without rebuilding it from images, or to add new exclusions/refs that then apply to both paths automatically.

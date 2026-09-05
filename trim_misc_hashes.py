@@ -24,6 +24,18 @@ def is_excluded(rel_path, exclude_dirs, exclude_paths, exclude_files):
     return any(rel_str == f or rel_str.endswith("/" + f) for f in exclude_files)
 
 
+def trim_entries(entries, exclude_dirs, exclude_paths, exclude_files):
+    kept = []
+    removed = []
+    for entry in entries:
+        rel_path = Path(entry["path"])
+        if is_excluded(rel_path, exclude_dirs, exclude_paths, exclude_files):
+            removed.append(entry["path"])
+        else:
+            kept.append(entry)
+    return kept, removed
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Trim a reference hash database (as built by build_ref_hash.py) of entries "
@@ -69,14 +81,7 @@ def main():
     with open(args.input_json) as f:
         db = json.load(f)
 
-    kept = []
-    removed = []
-    for entry in db.get("entries", []):
-        rel_path = Path(entry["path"])
-        if is_excluded(rel_path, exclude_dirs, exclude_paths, exclude_files):
-            removed.append(entry["path"])
-        else:
-            kept.append(entry)
+    kept, removed = trim_entries(db.get("entries", []), exclude_dirs, exclude_paths, exclude_files)
 
     for path in removed:
         print(f"remove: {path}")

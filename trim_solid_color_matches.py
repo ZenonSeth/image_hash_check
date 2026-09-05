@@ -48,6 +48,23 @@ def solid_match(entry_hashes, refs, threshold):
     return None
 
 
+def trim_entries(entries, refs, threshold):
+    kept = []
+    removed = []
+    for entry in entries:
+        base = entry["hashes"].get("rot0")
+        if base is None:
+            kept.append(entry)
+            continue
+        match = solid_match(base, refs, threshold)
+        if match:
+            ref_name, dist, phash_dist, dhash_dist = match
+            removed.append((entry["path"], ref_name, dist, phash_dist, dhash_dist))
+        else:
+            kept.append(entry)
+    return kept, removed
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Trim a reference hash database (as built by build_ref_hash.py) of entries "
@@ -90,19 +107,7 @@ def main():
         print(f"no reference images found in {args.refs_dir}", file=sys.stderr)
         sys.exit(1)
 
-    kept = []
-    removed = []
-    for entry in db.get("entries", []):
-        base = entry["hashes"].get("rot0")
-        if base is None:
-            kept.append(entry)
-            continue
-        match = solid_match(base, refs, args.threshold)
-        if match:
-            ref_name, dist, phash_dist, dhash_dist = match
-            removed.append((entry["path"], ref_name, dist, phash_dist, dhash_dist))
-        else:
-            kept.append(entry)
+    kept, removed = trim_entries(db.get("entries", []), refs, args.threshold)
 
     for path, ref_name, dist, phash_dist, dhash_dist in removed:
         print(f"remove: {path}  (matches {ref_name}, dist={dist:.2f}, phash_dist={phash_dist} dhash_dist={dhash_dist})")
